@@ -14,10 +14,6 @@ contract Erc20Staking is ReentrancyGuard, StakeErrors, StakeEvents, Stake {
         TOKENADDRESS = _tokenAddress;
     }
 
-    function getBalance() external view returns (uint256) {
-        return balances[msg.sender];
-    }
-
     function depositTokens(uint256 _amount, uint256 _duration) external nonReentrant {
         if(msg.sender == address(0)) {
             revert AddressZero();
