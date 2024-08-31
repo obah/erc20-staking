@@ -2,9 +2,17 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract Erc20Staking {
-    address constant TOKENADDRESS = 0xBD4F3F28d18AD0756219D6ba70bE2b64a090c4BE;
+contract Erc20Staking is ReentrancyGuard {
+    error AddressZero();
+    error InvalidDeposit();
+    error NoActiveStake();
+    error InsufficientFunds();
+    error ImmatureStake();
+
+    address immutable TOKENADDRESS;
+    // 0xBD4F3F28d18AD0756219D6ba70bE2b64a090c4BE
 
     /// @dev keeps track of each address's balance 
     mapping(address => uint256) balances;
@@ -26,24 +34,28 @@ contract Erc20Staking {
 
     mapping(address => Stake[]) availableUserStakes;
 
-    constructor() {}
-
-    modifier sanityCheck {
-         require(msg.sender != address(0), "Account zero detected");
-        _;
+    constructor(address _tokenAddress) {
+        TOKENADDRESS = _tokenAddress;
     }
 
-     function getBalance() external view returns (uint256) {
+    function getBalance() external view returns (uint256) {
         return balances[msg.sender];
     }
 
-    function depositTokens(uint256 _amount, uint256 _duration) external {
-        require(msg.sender != address(0), "Account zero detected");
-        require(_amount > 0, "You can deposit 0 tokens");
+    function depositTokens(uint256 _amount, uint256 _duration) external nonReentrant {
+        if(msg.sender == address(0)) {
+            revert AddressZero();
+        }
+
+        if(_amount <= 0) {
+            revert InvalidDeposit();
+        }
 
         uint256 _userTokenBalance = IERC20(TOKENADDRESS).balanceOf(msg.sender);
 
-        require(_userTokenBalance >= _amount, "Insufficient funds");
+        if(_userTokenBalance < _amount) {
+            revert InsufficientFunds();
+        }
 
         IERC20(TOKENADDRESS).transferFrom(msg.sender, address(this), _amount);
 
@@ -100,7 +112,11 @@ contract Erc20Staking {
         return _withdrawableFunds;
     }  
 
-    function payRewards() private {
+    function payRewards() public {
+        if(balances[msg.sender] <= 0) {
+            revert NoActiveStake();
+        }
+
         Stake[] storage _userStakes = availableUserStakes[msg.sender];
 
         uint256 _totalReward;
@@ -121,20 +137,28 @@ contract Erc20Staking {
 
             _stake.lastRewardTime = block.timestamp;
         }
-
-        //? use this for the eth stake to pay the accumulated rewards
-        // require(_totalReward > 0, "No rewards available");
-        // payable(msg.sender).transfer(totalReward);
     }
 
-    function withdraw(uint256 _amount) external sanityCheck() {
+    function withdraw(uint256 _amount) external nonReentrant {
+        if(msg.sender == address(0)) {
+            revert AddressZero();
+        }
+
+        if(balances[msg.sender] <= 0) {
+            revert NoActiveStake();
+        }
+
         payRewards();
 
-        require(_amount >= balances[msg.sender], "Insufficient funds");
+        if(_amount < balances[msg.sender]) {
+            revert InsufficientFunds();
+        }
         
         uint256 _withdrawableFunds = checkWithdrawableFunds();
 
-        require(_withdrawableFunds > 0, "Your deposit is still locked!");
+        if(_withdrawableFunds <= 0) {
+            revert ImmatureStake();
+        }
 
         Stake[] storage _userStakes = availableUserStakes[msg.sender];
 
