@@ -3,14 +3,9 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {StakeErrors, StakeEvents} from "./IStake.sol";
 
-contract Erc20Staking is ReentrancyGuard {
-    error AddressZero();
-    error InvalidDeposit();
-    error NoActiveStake();
-    error InsufficientFunds();
-    error ImmatureStake();
-
+contract Erc20Staking is ReentrancyGuard, StakeErrors, StakeEvents {
     address immutable TOKENADDRESS;
     // 0xBD4F3F28d18AD0756219D6ba70bE2b64a090c4BE
 
@@ -75,6 +70,8 @@ contract Erc20Staking is ReentrancyGuard {
         _stake.maturity = _durationInSecs + block.timestamp;
 
         counter = counter + 1;
+
+        emit Deposited(msg.sender, _amount, block.timestamp, _duration);
     }
 
     function calculateReward(uint256 _amount, uint256 _duration) private view returns(uint256) {
@@ -138,6 +135,8 @@ contract Erc20Staking is ReentrancyGuard {
 
             _stake.lastRewardTime = block.timestamp;
         }
+
+        emit RewardPaid(msg.sender, _totalReward);
     }
 
     function withdraw(uint256 _amount) external nonReentrant {
@@ -188,5 +187,7 @@ contract Erc20Staking is ReentrancyGuard {
         balances[msg.sender] = balances[msg.sender] - _amount;
 
         IERC20(TOKENADDRESS).transfer(msg.sender, _amount);
+
+        emit Withdrawn(msg.sender, _amount);
     }
 }
