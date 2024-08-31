@@ -1,9 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {IStake, StakeErrors, StakeEvents} from "./IStake.sol";
+// import {StakeErrors, StakeEvents} from "./IStake.sol";
+// import {IStake, StakeErrors, StakeEvents} from "./IStake.sol";
 
-abstract contract Stake is IStake, StakeErrors, StakeEvents {
+interface StakeErrors {
+    error AddressZero();
+    error InvalidDeposit();
+    error NoActiveStake();
+    error InsufficientFunds();
+    error ImmatureStake();
+}
+
+interface StakeEvents {
+    event RewardPaid(address indexed owner, uint256 indexed amount);
+    event Deposited(address indexed owner, uint256 amount, uint256 indexed time, uint256 indexed duration);
+    event Withdrawn(address indexed owner, uint256 indexed amount);
+}
+
+abstract contract Stake is StakeErrors, StakeEvents {
     /// @dev keeps track of each address's balance 
     mapping(address => uint256) public balances;
 
