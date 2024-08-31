@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// import {StakeErrors, StakeEvents} from "./IStake.sol";
-// import {IStake, StakeErrors, StakeEvents} from "./IStake.sol";
-
 interface StakeErrors {
     error AddressZero();
     error InvalidDeposit();
@@ -46,11 +43,8 @@ abstract contract Stake is StakeErrors, StakeEvents {
     }
 
     function calculateReward(uint256 amount, uint256 duration) internal view returns(uint256) {
-        //yearSeconds = 60 * 60 * 24 * 7 * 52;
-        uint256 yearSeconds = 31449600;
-
         uint256 timeInSeconds = block.timestamp - duration;
-        uint256 timeInYear = timeInSeconds / yearSeconds;  
+        uint256 timeInYear = timeInSeconds / 52 weeks;  
         uint256 prt = amount * 10 * timeInYear;
 
         return prt / 100; 
