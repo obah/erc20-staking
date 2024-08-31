@@ -57,6 +57,7 @@ contract Erc20Staking is ReentrancyGuard {
             revert InsufficientFunds();
         }
 
+        IERC20(TOKENADDRESS).approve(address(this), _amount);
         IERC20(TOKENADDRESS).transferFrom(msg.sender, address(this), _amount);
 
         balances[msg.sender] = balances[msg.sender] + _amount;
