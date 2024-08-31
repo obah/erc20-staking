@@ -35,6 +35,8 @@ contract EthStaking is ReentrancyGuard, IStake, StakeErrors, StakeEvents, Stake 
         _stake.maturity = _durationInSecs + block.timestamp;
 
         counter = counter + 1;
+
+        emit Deposited(msg.sender, msg.value, block.timestamp, _duration);
     }
 
     function withdraw(uint256 _amount) external nonReentrant {
@@ -82,5 +84,7 @@ contract EthStaking is ReentrancyGuard, IStake, StakeErrors, StakeEvents, Stake 
 
         (bool sent, ) = msg.sender.call{value: _amount}("");
         require(sent, "Failed to withdraw ETH");
+
+        emit Withdrawn(msg.sender, _amount);
     }
 }
