@@ -7,8 +7,6 @@ import "./Stake.sol";
 
 contract EthStaking is ReentrancyGuard, StakeErrors, StakeEvents, Stake {
    
-    constructor() {}
-
     receive() external payable {}
 
     function depositETH(uint256 _duration) external payable nonReentrant {

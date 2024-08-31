@@ -36,8 +36,6 @@ abstract contract Stake is StakeErrors, StakeEvents {
 
     mapping(address => StakeRecord[]) availableUserStakes;
 
-    constructor() {}
-
     function _getBalance(address account) public view  virtual returns(uint256) {
         return balances[account];
     }
